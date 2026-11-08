@@ -1,0 +1,21 @@
+<table class="w-full text-sm">
+  <thead class="text-left text-ink/50 border-b border-ink/10">
+    <tr><th class="p-3">#</th><th class="p-3">Title / file</th><th class="p-3">Type</th><th class="p-3">Status</th></tr>
+  </thead>
+  <tbody>
+    {% for d in docs %}
+    <tr class="border-b border-ink/5">
+      <td class="p-3 text-ink/50">{{ d.id }}</td>
+      <td class="p-3"><a href="/item/{{ d.id }}" class="text-harbour hover:underline">{{ d.title or d.file_name }}</a>
+        {% if d.error %}<div class="text-xs text-rust mt-1">{{ d.error }}</div>{% endif %}</td>
+      <td class="p-3">{{ d.type }}</td>
+      <td class="p-3">
+        {% set colors = {'done': 'bg-moss/15 text-moss', 'failed': 'bg-rust/15 text-rust', 'processing': 'bg-harbour/15 text-harbour'} %}
+        <span class="rounded-full px-2 py-0.5 text-xs {{ colors.get(d.status, 'bg-ink/10 text-ink/70') }}">{{ d.status }}</span>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4" class="p-4 text-ink/60">No items yet. Upload a file above or drop one in the watch folder.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>

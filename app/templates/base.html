@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}ArchiveLens NL{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = { theme: { extend: {
+      fontFamily: { serif: ['"Source Serif 4"', 'Georgia', 'serif'], sans: ['Inter', 'system-ui', 'sans-serif'] },
+      colors: { paper: '#f7f3ea', ink: '#1f2a37', harbour: '#1d4e6b', moss: '#4a6b3a', rust: '#a4492b' }
+    } } }
+  </script>
+  <style>
+    .htmx-indicator { display: none; }
+    .htmx-request .htmx-indicator, .htmx-request.htmx-indicator { display: inline-block; }
+  </style>
+</head>
+<body class="bg-paper text-ink font-sans min-h-screen flex flex-col">
+  <header class="border-b border-ink/10 bg-white/60 backdrop-blur">
+    <nav class="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center gap-x-6 gap-y-2">
+      <a href="/" class="font-serif text-xl font-semibold text-harbour">ArchiveLens <span class="text-rust">NL</span></a>
+      <a href="/" class="text-sm hover:text-harbour">Browse &amp; search</a>
+      <a href="/ask" class="text-sm hover:text-harbour">Ask the Archive</a>
+      <a href="/docs" class="text-sm hover:text-harbour">API</a>
+      <span class="flex-1"></span>
+      {% if is_admin %}
+        <a href="/admin" class="text-sm font-medium text-moss">Admin</a>
+        <form method="post" action="/admin/logout"><button class="text-sm text-ink/60 hover:text-rust">Log out</button></form>
+      {% else %}
+        <a href="/admin/login" class="text-sm text-ink/60 hover:text-harbour">Archivist login</a>
+      {% endif %}
+    </nav>
+  </header>
+  <main class="max-w-5xl w-full mx-auto px-4 py-8 flex-1">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="text-center text-xs text-ink/50 py-6">
+    ArchiveLens NL · OCR + AI metadata + semantic search + RAG · FastAPI, PostgreSQL/pgvector, HTMX
+    {% if not ai_enabled() %}<br>AI features running in offline demo mode{% endif %}
+  </footer>
+</body>
+</html>

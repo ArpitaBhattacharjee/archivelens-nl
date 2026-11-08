@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="mb-8">
+  <h1 class="font-serif text-3xl sm:text-4xl font-semibold">Newfoundland &amp; Labrador, searchable.</h1>
+  <p class="mt-2 text-ink/70 max-w-2xl">Scanned letters, newspapers, photographs and recordings, turned into
+    organized, AI-ready records. {{ total }} item{{ '' if total == 1 else 's' }} in the archive.</p>
+</section>
+
+<form id="search-form" action="/" method="get" class="bg-white rounded-xl shadow-sm border border-ink/10 p-4 grid gap-3 sm:grid-cols-6"
+      hx-get="/search" hx-target="#results"
+      hx-trigger="submit, input delay:400ms, change">
+  <input id="q" name="q" value="{{ q }}" placeholder="Search by meaning, e.g. ‘seal hunt disasters’"
+         class="sm:col-span-6 w-full rounded-lg border border-ink/20 px-4 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-harbour">
+  <select name="doc_type" class="sm:col-span-2 rounded-lg border border-ink/20 px-3 py-2">
+    <option value="">All types</option>
+    {% for t in types %}<option value="{{ t }}" {% if t == doc_type %}selected{% endif %}>{{ t }}</option>{% endfor %}
+  </select>
+  <input name="subject" value="{{ subject }}" placeholder="Tag, e.g. fishery" class="filter sm:col-span-2 rounded-lg border border-ink/20 px-3 py-2">
+  <input name="year_from" value="{{ year_from }}" placeholder="From year" inputmode="numeric" class="filter rounded-lg border border-ink/20 px-3 py-2">
+  <input name="year_to" value="{{ year_to }}" placeholder="To year" inputmode="numeric" class="filter rounded-lg border border-ink/20 px-3 py-2">
+</form>
+
+<div id="results" class="mt-6">
+  {% include "_results.html" %}
+</div>
+{% endblock %}

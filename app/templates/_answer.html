@@ -1,0 +1,15 @@
+<div class="bg-white rounded-xl border border-ink/10 p-5">
+  <p class="text-xs uppercase tracking-wide text-ink/50">Answer</p>
+  <p class="mt-2 leading-relaxed whitespace-pre-line">{{ result.answer }}</p>
+</div>
+{% if result.sources %}
+<h2 class="text-xs uppercase tracking-wide text-ink/50 mt-6 mb-2">Sources</h2>
+<ol class="grid gap-2">
+  {% for s in result.sources %}
+  <li class="bg-white rounded-lg border border-ink/10 p-3 text-sm">
+    <a href="/item/{{ s.document_id }}" class="font-medium text-harbour hover:underline">[{{ s.n }}] {{ s.title }}</a>
+    <p class="text-ink/70 mt-1">{{ snippet(s.text, result.question, 260) }}</p>
+  </li>
+  {% endfor %}
+</ol>
+{% endif %}

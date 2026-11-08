@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ doc.title or doc.file_name }} · ArchiveLens NL{% endblock %}
+{% block content %}
+<a href="/" class="text-sm text-harbour hover:underline">← Back to search</a>
+<h1 class="font-serif text-3xl font-semibold mt-3">{{ doc.title or doc.file_name }}</h1>
+{% if doc.description %}<p class="mt-2 text-ink/75 max-w-3xl">{{ doc.description }}</p>{% endif %}
+
+<div class="grid gap-6 md:grid-cols-3 mt-6">
+  <section class="md:col-span-1 bg-white rounded-xl border border-ink/10 p-4 h-fit">
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-ink/50 mb-3">Catalogue record (Dublin Core)</h2>
+    <dl class="text-sm grid gap-2">
+      {% for label, value in [('Creator', doc.creator), ('Date', doc.date), ('Type', doc.type), ('Format', doc.format),
+                              ('Places', doc.coverage), ('People', doc.people), ('Subjects', doc.subject),
+                              ('Language', doc.language), ('Source', doc.source), ('Rights', doc.rights)] %}
+        {% if value %}<div><dt class="text-ink/50">{{ label }}</dt><dd>{{ value }}</dd></div>{% endif %}
+      {% endfor %}
+      <div><dt class="text-ink/50">Original file</dt><dd><a class="text-harbour hover:underline break-all" href="/files/{{ doc.id }}">{{ doc.file_name }}</a></dd></div>
+      {% if is_admin %}<div><dt class="text-ink/50">Status</dt><dd>{{ doc.status }}{% if doc.error %} — {{ doc.error }}{% endif %}</dd></div>{% endif %}
+    </dl>
+  </section>
+
+  <section class="md:col-span-2 bg-white rounded-xl border border-ink/10 p-4">
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-ink/50 mb-3">Extracted text (OCR / transcript)</h2>
+    <div class="text-sm leading-relaxed whitespace-pre-line max-h-[32rem] overflow-y-auto">{{ doc.full_text or 'No text yet.' }}</div>
+  </section>
+</div>
+
+{% if is_admin %}
+<section class="mt-8 bg-white rounded-xl border border-moss/30 p-4">
+  <h2 class="font-semibold text-moss">Review metadata</h2>
+  <p class="text-sm text-ink/60 mb-4">AI suggestions are filled in automatically. Correct anything that's wrong. Use “;” between multiple values.</p>
+  <form method="post" action="/admin/item/{{ doc.id }}" class="grid gap-3 sm:grid-cols-2">
+    {% for f in fields %}
+      <label class="text-sm {% if f == 'description' %}sm:col-span-2{% endif %}">
+        <span class="text-ink/60 capitalize">{{ 'places' if f == 'coverage' else f }}</span>
+        {% if f == 'description' %}
+          <textarea name="{{ f }}" rows="3" class="mt-1 w-full rounded-lg border border-ink/20 px-3 py-2">{{ doc[f] or '' }}</textarea>
+        {% else %}
+          <input name="{{ f }}" value="{{ doc[f] or '' }}" class="mt-1 w-full rounded-lg border border-ink/20 px-3 py-2">
+        {% endif %}
+      </label>
+    {% endfor %}
+    <div class="sm:col-span-2 flex flex-wrap gap-2">
+      <button class="bg-moss text-white rounded-lg px-4 py-2 text-sm font-medium">Save changes</button>
+    </div>
+  </form>
+  <div class="flex gap-2 mt-3">
+    <form method="post" action="/admin/item/{{ doc.id }}/reprocess"><button class="text-sm border border-ink/20 rounded-lg px-3 py-1.5">Re-run pipeline</button></form>
+    <form method="post" action="/admin/item/{{ doc.id }}/delete" onsubmit="return confirm('Delete this item permanently?')"><button class="text-sm text-rust border border-rust/30 rounded-lg px-3 py-1.5">Delete</button></form>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

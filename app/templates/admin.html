@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Admin · ArchiveLens NL{% endblock %}
+{% block content %}
+<h1 class="font-serif text-3xl font-semibold">Add to the archive</h1>
+<p class="mt-2 text-ink/70 max-w-2xl">Upload scans (PDF, JPG, PNG, TIFF), text files, or audio/video recordings.
+  Each file is run through the pipeline: OCR or transcription → AI metadata → chunking → embeddings.</p>
+
+{% if messages %}
+<ul class="mt-4 bg-moss/10 border border-moss/30 rounded-lg p-3 text-sm grid gap-1">
+  {% for m in messages %}<li>{{ m }}</li>{% endfor %}
+</ul>
+{% endif %}
+
+<form method="post" action="/admin/upload" enctype="multipart/form-data" class="mt-6 bg-white rounded-xl border border-ink/10 p-4 grid gap-3 sm:grid-cols-2">
+  <input type="file" name="files" multiple required class="sm:col-span-2 text-sm"
+         accept=".pdf,.png,.jpg,.jpeg,.tif,.tiff,.webp,.txt,.md,.mp3,.wav,.m4a,.ogg,.flac,.mp4,.mov,.webm">
+  <input name="source" placeholder="Source / collection (optional)" class="rounded-lg border border-ink/20 px-3 py-2 text-sm">
+  <input name="rights" placeholder="Rights, e.g. Public domain (optional)" class="rounded-lg border border-ink/20 px-3 py-2 text-sm">
+  <div class="sm:col-span-2"><button class="bg-harbour text-white rounded-lg px-4 py-2 font-medium">Upload &amp; process</button></div>
+</form>
+
+<h2 class="font-semibold mt-10 mb-3">Pipeline status <span class="text-xs font-normal text-ink/50">(refreshes every 3 seconds)</span></h2>
+<div hx-get="/admin/status" hx-trigger="load, every 3s" class="bg-white rounded-xl border border-ink/10 overflow-x-auto">
+  <p class="p-4 text-sm text-ink/60">Loading…</p>
+</div>
+{% endblock %}

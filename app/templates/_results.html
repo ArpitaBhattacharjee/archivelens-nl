@@ -1,0 +1,22 @@
+<p class="text-sm text-ink/60 mb-3">
+  {% if q %}{{ results|length }} result{{ '' if results|length == 1 else 's' }} for “{{ q }}”{% else %}Browsing the collection{% endif %}
+</p>
+{% if not results %}
+  <div class="bg-white rounded-xl border border-dashed border-ink/20 p-8 text-center text-ink/60">
+    Nothing found. Try different words or remove a filter.
+  </div>
+{% endif %}
+<ul class="grid gap-3">
+  {% for d in results %}
+  <li class="bg-white rounded-xl border border-ink/10 p-4 hover:border-harbour/40 transition">
+    <a href="/item/{{ d.id }}" class="font-serif text-lg font-semibold text-harbour hover:underline">{{ d.title or d.file_name }}</a>
+    <div class="text-xs text-ink/60 mt-1">{{ d.date or 'Undated' }} · {{ d.type }}{% if d.coverage %} · {{ split_list(d.coverage)[:3]|join(', ') }}{% endif %}</div>
+    <p class="text-sm mt-2 text-ink/80">{{ d.description or snippet(d.full_text, q) }}</p>
+    {% if d.subject %}
+    <div class="flex flex-wrap gap-1 mt-2">
+      {% for s in split_list(d.subject) %}<span class="text-xs bg-moss/10 text-moss rounded-full px-2 py-0.5">{{ s }}</span>{% endfor %}
+    </div>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
