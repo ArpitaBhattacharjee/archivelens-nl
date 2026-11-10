@@ -40,6 +40,22 @@ def _normalize(vec: list[float]) -> list[float]:
     return [v / norm for v in vec]
 
 
+def _with_retry(call, attempts: int = 4):
+    """Retry when Gemini is busy (503) or rate-limited (429), waiting longer each time."""
+    import time
+
+    for i in range(attempts):
+        try:
+            return call()
+        except Exception as exc:
+            busy = any(code in str(exc) for code in ("503", "429", "UNAVAILABLE", "RESOURCE_EXHAUSTED"))
+            if not busy or i == attempts - 1:
+                raise
+            wait = 5 * (2 ** i)
+            log.warning("Gemini busy, retrying in %s seconds: %s", wait, exc)
+            time.sleep(wait)
+
+
 # ---------- Embeddings ----------
 
 def fallback_embedding(text: str, dim: int | None = None) -> list[float]:
@@ -65,11 +81,11 @@ def embed(texts: list[str], task: str = "RETRIEVAL_DOCUMENT") -> list[list[float
 
     vectors: list[list[float]] = []
     for i in range(0, len(texts), 50):
-        result = _get_client().models.embed_content(
+        result = _with_retry(lambda: _get_client().models.embed_content(
             model=settings.embed_model,
             contents=texts[i:i + 50],
             config=types.EmbedContentConfig(task_type=task, output_dimensionality=settings.embed_dim),
-        )
+        ))
         # Reduced-size Gemini embeddings must be normalized before cosine search.
         vectors.extend(_normalize(list(e.values)) for e in result.embeddings)
     return vectors
@@ -142,11 +158,11 @@ def extract_metadata(text: str, filename: str) -> dict:
     from google.genai import types
 
     try:
-        response = _get_client().models.generate_content(
+        response = _with_retry(lambda: _get_client().models.generate_content(
             model=settings.chat_model,
             contents=METADATA_PROMPT.format(filename=filename, text=text[:12000]),
             config=types.GenerateContentConfig(response_mime_type="application/json", temperature=0.2),
-        )
+        ))
         return parse_metadata_json(response.text)
     except Exception as exc:
         log.warning("Gemini metadata failed, using fallback: %s", exc)
@@ -161,13 +177,13 @@ def transcribe(data: bytes, mime: str) -> str:
         raise RuntimeError("Audio/video transcription needs GEMINI_API_KEY")
     from google.genai import types
 
-    response = _get_client().models.generate_content(
+    response = _with_retry(lambda: _get_client().models.generate_content(
         model=settings.chat_model,
         contents=[
             types.Part.from_bytes(data=data, mime_type=mime),
             "Transcribe this recording word for word. Return plain text only.",
         ],
-    )
+    ))
     return response.text or ""
 
 
@@ -176,7 +192,7 @@ def transcribe(data: bytes, mime: str) -> str:
 ANSWER_PROMPT = """You answer questions about a digital archive of Newfoundland and Labrador history.
 Use ONLY the numbered sources below. Cite sources inline like [1] or [2].
 If the sources do not contain the answer, say you could not find it in the archive.
-Keep the answer under 150 words.
+Keep the answer under 150 words. Write plain text with no Markdown (no ** or #); use "- " for lists.
 
 Sources:
 {sources}
@@ -191,8 +207,9 @@ def answer(question: str, passages: list[dict]) -> str:
     if not enabled():
         return "AI answers are off (no GEMINI_API_KEY set). Here are the most relevant passages from the archive."
     sources = "\n\n".join(f"[{p['n']}] {p['title']}: {p['text']}" for p in passages)
-    response = _get_client().models.generate_content(
+    response = _with_retry(lambda: _get_client().models.generate_content(
         model=settings.chat_model,
         contents=ANSWER_PROMPT.format(sources=sources, question=question),
-    )
-    return (response.text or "").strip()
+    ))
+    # Plain text for the web page: drop Markdown bold/italic markers
+    return re.sub(r"\*\*|__", "", (response.text or "")).strip()
