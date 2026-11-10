@@ -1,4 +1,5 @@
 """FastAPI app: web pages (HTMX) + JSON API."""
+import logging
 import secrets
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -27,8 +28,16 @@ EDITABLE = ["title", "creator", "date", "subject", "description", "coverage", "p
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    logging.basicConfig(level=logging.INFO)
     settings.upload_dir.mkdir(parents=True, exist_ok=True)
     init_db()
+    # Background work is lost when the server restarts; mark those items so they can be re-run.
+    from .db import SessionLocal
+    with SessionLocal() as db:
+        db.query(Document).filter(Document.status.in_(["pending", "processing"])).update(
+            {"status": "failed", "error": "Interrupted by a server restart. Click Re-run pipeline."},
+            synchronize_session=False)
+        db.commit()
     yield
 
 

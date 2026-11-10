@@ -17,7 +17,7 @@ class Settings:
     def __init__(self) -> None:
         self.database_url = _database_url()
         self.gemini_api_key = os.getenv("GEMINI_API_KEY", "").strip()
-        self.chat_model = os.getenv("GEMINI_CHAT_MODEL", "gemini-2.5-flash")
+        self.chat_model = os.getenv("GEMINI_CHAT_MODEL", "gemini-3.5-flash-lite")
         self.embed_model = os.getenv("GEMINI_EMBED_MODEL", "gemini-embedding-001")
         self.embed_dim = 768
         self.admin_password = os.getenv("ADMIN_PASSWORD", "change-me")

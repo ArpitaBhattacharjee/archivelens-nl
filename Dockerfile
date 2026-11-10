@@ -12,6 +12,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app ./app
 COPY tests ./tests
 
-ENV PYTHONUNBUFFERED=1 PORT=8000
+ENV PYTHONUNBUFFERED=1 PORT=8000 OMP_THREAD_LIMIT=1
 EXPOSE 8000
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]

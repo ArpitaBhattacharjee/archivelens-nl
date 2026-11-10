@@ -5,12 +5,14 @@ fallbacks, so tests and local demos never need a key.
 """
 import hashlib
 import json
+import logging
 import math
 import re
 
 from .config import settings
 
 _client = None
+log = logging.getLogger("archivelens.ai")
 
 
 def enabled() -> bool:
@@ -21,8 +23,11 @@ def _get_client():
     global _client
     if _client is None:
         from google import genai
+        from google.genai import types
 
-        _client = genai.Client(api_key=settings.gemini_api_key)
+        # 90-second timeout so a slow or busy model can't leave an item stuck
+        _client = genai.Client(api_key=settings.gemini_api_key,
+                               http_options=types.HttpOptions(timeout=90_000))
     return _client
 
 
@@ -143,7 +148,8 @@ def extract_metadata(text: str, filename: str) -> dict:
             config=types.GenerateContentConfig(response_mime_type="application/json", temperature=0.2),
         )
         return parse_metadata_json(response.text)
-    except Exception:
+    except Exception as exc:
+        log.warning("Gemini metadata failed, using fallback: %s", exc)
         return fallback_metadata(text, filename)
 
 

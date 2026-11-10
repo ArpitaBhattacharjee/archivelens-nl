@@ -3,6 +3,7 @@
 Every upload (web form, API or watch folder) goes through the same steps,
 so the process is repeatable. Status moves pending -> processing -> done/failed.
 """
+import logging
 from pathlib import Path
 
 from sqlalchemy.orm import Session
@@ -11,6 +12,8 @@ from . import ai, ocr
 from .config import settings
 from .db import SessionLocal
 from .models import Chunk, Document
+log = logging.getLogger("uvicorn.error")  # shows up in the Render logs
+
 from .text_utils import (DC_TYPE, chunk_text, clean_text, guess_kind, guess_mime,
                          safe_filename, sha256_bytes)
 
@@ -88,11 +91,13 @@ def process_document(doc_id: int) -> None:
             return
         doc.status, doc.error = "processing", None
         db.commit()
+        log.info("Item %s: extracting text from %s", doc.id, doc.file_name)
 
         text = clean_text(extract_text(Path(doc.file_path), doc.file_name, doc.format))
         if not text:
             raise ValueError("no text could be extracted")
 
+        log.info("Item %s: %d characters extracted, generating metadata", doc.id, len(text))
         apply_metadata(doc, ai.extract_metadata(text, doc.file_name))
         doc.full_text = text
 
@@ -105,7 +110,9 @@ def process_document(doc_id: int) -> None:
         )
         doc.status = "done"
         db.commit()
+        log.info("Item %s: done (%d chunks)", doc.id, len(pieces))
     except Exception as exc:  # record the error so it shows on the admin page
+        log.exception("Item %s failed", doc_id)
         db.rollback()
         doc = db.get(Document, doc_id)
         if doc is not None:
