@@ -7,7 +7,7 @@ searchable records: OCR or transcription → AI-generated Dublin Core metadata �
 in PostgreSQL/pgvector. People can then browse, filter, search by meaning, and ask questions that are
 answered only from the archive, with cited sources.
 
-**Live demo:** `<add your Render URL>` · **API docs:** `<your URL>/docs`
+**Live demo:** https://archivelens-nl.onrender.com · **API docs:** https://archivelens-nl.onrender.com/docs
 
 ---
 
